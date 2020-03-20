@@ -183,7 +183,7 @@ Gets tracks starting from id and ending by id in subset
 """
 
 
-def get_tracks_by_se_id_offset(results, tracks_to_move, start_id_offset, end_id_offset):
+def get_tracks_by_se_id_offset(results, tracks_to_move, start_id_offset, end_id_offset, ids_exceptions):
     if start_id_offset == end_id_offset:
         return tracks_to_move.append(start_id_offset)
     for item in results['items']:
@@ -201,25 +201,28 @@ def get_tracks_by_se_id_offset(results, tracks_to_move, start_id_offset, end_id_
                 end_id_offset_found = True
             elif not end_id_offset_found:
                 tracks_to_move.append(track['id'])
+    [tracks_to_move.remove(id)
+     for id in ids_exceptions if id in tracks_to_move]
     return tracks_to_move
 
 
 """
 Gets all tracks starting from id and ending by id
+ids_exceptions - list of ids in the range which should be exempted
 """
 
 
-def get_all_tracks_by_se_id_offset(start_id_offset, end_id_offset):
+def get_all_tracks_by_se_id_offset(start_id_offset, end_id_offset, ids_exceptions):
     if sp:
         results = get_first_saved_songs()
         tracks_to_move = []
         tracks_to_move = get_tracks_by_se_id_offset(
-            results, tracks_to_move, start_id_offset, end_id_offset)
+            results, tracks_to_move, start_id_offset, end_id_offset, ids_exceptions)
         while results['next']:
             if not end_id_offset_found:
                 results = sp.next(results)
                 tracks_to_move = get_tracks_by_se_id_offset(
-                    results, tracks_to_move, start_id_offset, end_id_offset)
+                    results, tracks_to_move, start_id_offset, end_id_offset, ids_exceptions)
         return tracks_to_move
     else:
         print("Can't get token for ", username)
@@ -230,7 +233,7 @@ setUp()
 # print(tracks_to_move)
 # tracks_to_move = get_all_tracks_by_id_offset('4RzpCjByV1NWUGKVQGuej6')
 tracks_to_move = get_all_tracks_by_se_id_offset(
-    '4RzpCjByV1NWUGKVQGuej6', '59PYPDxTbqJpiGfyogPb5h')
+    '4RzpCjByV1NWUGKVQGuej6', '4LIbjDbLweGCrHVw8QbMSb', [])
 print(tracks_to_move)
 new_playlist_id = create_playlist()
 add_to_playlist(new_playlist_id, tracks_to_move)
