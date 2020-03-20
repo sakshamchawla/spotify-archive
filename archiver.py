@@ -31,38 +31,60 @@ def setUp():
     sp = spotipy.Spotify(auth=token)
 
 
-def show_tracks(results):
-    tracks_to_move = []
+def show_tracks(results, tracks_to_move):
 
     for item in results['items']:
         track = item['track']
-        print("%32.32s %32.32s %32s %s" % (
-            track['artists'][0]['name'], track['name'], item['added_at'], date_before >= item['added_at']))
+    #    print("%32.32s %32.32s %32s %s" % (
+    #        track['artists'][0]['name'], track['name'], item['added_at'], date_before >= item['added_at']))
         if date_before >= item['added_at']:
             tracks_to_move.append(track['id'])
-    print(tracks_to_move)
+    return tracks_to_move
 
 
 def create_playlist():
     today = date.today().strftime('%b %Y')
-    print(today)
+    # print(today)
     if sp:
-        results = sp.user_playlist_create(username, 'Archive ' + str(today), public=True, description='Created by spotify-archive')
+        results = sp.user_playlist_create(
+            username, 'Archive ' + str(today), public=True, description='Created by spotify-archive')
         return results['id']
     else:
         return None
 
+
 def getSavedSongs():
     if sp:
         results = sp.current_user_saved_tracks()
-        show_tracks(results)
+        tracks_to_move = []
+        tracks_to_move = show_tracks(results, tracks_to_move)
         while results['next']:
             results = sp.next(results)
-            show_tracks(results)
+            tracks_to_move = show_tracks(results, tracks_to_move)
+        return tracks_to_move
     else:
         print("Can't get token for", username)
 
 
+def add_to_playlist(new_playlist_id, tracks_to_move):
+    if sp:
+        results = sp.user_playlist_add_tracks(
+            username, new_playlist_id, tracks_to_move)
+        # print(results)
+    else:
+        print('''couldn't do it ''')
+
+def delete_from_saved(tracks_to_move):
+    if sp:
+        sp.trace = False
+        results = sp.current_user_saved_tracks_delete(tracks=tracks_to_move)
+        print(results)
+    else:
+        print('Token error')
+
 setUp()
-getSavedSongs()
+tracks_to_move = getSavedSongs()
+print(tracks_to_move)
 new_playlist_id = create_playlist()
+add_to_playlist(new_playlist_id, tracks_to_move)
+delete_from_saved(tracks_to_move)
