@@ -24,6 +24,7 @@ Initializes Spotify and does authorization
 
 
 def setUp():
+    print('Setting up')
     with open(config_file, 'r') as config:
         configVals = [line.rstrip('\n') for line in config]
         global client_id, client_secret, redirect_uri, username, scope
@@ -54,6 +55,7 @@ Names it as "Archive Month-Year"
 
 
 def create_playlist():
+    print('Creating playlist')
     today = date.today().strftime('%b %Y')
     # print(today)
     if sp:
@@ -70,6 +72,7 @@ Adds all the songs to a playlist
 
 
 def add_to_playlist(new_playlist_id, tracks_to_move):
+    print('Adding songs to playlist')
     if sp:
         results = sp.user_playlist_add_tracks(
             username, new_playlist_id, tracks_to_move)
@@ -98,6 +101,7 @@ Gets all the tracks by calling get_tracks_by_date_offset()
 
 def get_all_tracks_by_date_offset(date_before):
     if sp:
+        print('Getting songs')
         results = get_first_saved_songs()
         # show_tracks(results)
         tracks_to_move = []
@@ -130,11 +134,14 @@ Deletes songs from Saved List
 """
 
 
-def delete_from_saved(tracks_to_move):
+def delete_from_saved(tracks_to_move, new_playlist_id):
     if sp:
-        sp.trace = False
-        results = sp.current_user_saved_tracks_delete(tracks=tracks_to_move)
-        print(results)
+        text = input('Playlist has been created.\nAre you sure you to delete from Saved Songs? (Yes or No) ')
+        if text.lower() == 'yes':
+            sp.trace = False
+            results = sp.current_user_saved_tracks_delete(tracks=tracks_to_move)
+        else:
+            print('Aborted. Delete Playlist manually')
     else:
         print('Token error')
 
@@ -166,6 +173,7 @@ Gets tracks starting from id [id:] by get_tracks_by_id_offset
 
 def get_all_tracks_by_id_offset(id_offset):
     if sp:
+        print('Getting songs')
         results = get_first_saved_songs()
         tracks_to_move = []
         tracks_to_move = get_tracks_by_id_offset(
@@ -215,6 +223,7 @@ ids_exceptions - list of ids in the range which should be exempted
 
 def get_all_tracks_by_se_id_offset(start_id_offset, end_id_offset, ids_exceptions):
     if sp:
+        print('Getting songs')
         results = get_first_saved_songs()
         tracks_to_move = []
         tracks_to_move = get_tracks_by_se_id_offset(
@@ -256,6 +265,6 @@ if __name__ == "__main__":
                 raise ValueError('Missing Filename')
         new_playlist_id = create_playlist()
         add_to_playlist(new_playlist_id, tracks_to_move)
-        # delete_from_saved(tracks_to_move)
+        delete_from_saved(tracks_to_move, new_playlist_id)
     else:
         raise ValueError('Error Missing arg - mode args')
