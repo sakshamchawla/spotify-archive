@@ -16,7 +16,6 @@ id_offset_found = False
 start_id_offset_found = False
 end_id_offset_found = False
 
-date_before = '2019-09-13T00:00:00Z'
 
 """
 Initial set up config files
@@ -84,7 +83,7 @@ Gets the tracks in a "subset" of tracks stored in "results"
 """
 
 
-def get_tracks_by_date_offset(results, tracks_to_move):
+def get_tracks_by_date_offset(results, tracks_to_move, date_before):
     for item in results['items']:
         track = item['track']
         if date_before >= item['added_at']:
@@ -97,15 +96,17 @@ Gets all the tracks by calling get_tracks_by_date_offset()
 """
 
 
-def get_all_tracks_by_date_offset():
+def get_all_tracks_by_date_offset(date_before):
     if sp:
         results = get_first_saved_songs()
         # show_tracks(results)
         tracks_to_move = []
-        tracks_to_move = get_tracks_by_date_offset(results, tracks_to_move)
+        tracks_to_move = get_tracks_by_date_offset(
+            results, tracks_to_move, date_before)
         while results['next']:
             results = sp.next(results)
-            tracks_to_move = get_tracks_by_date_offset(results, tracks_to_move)
+            tracks_to_move = get_tracks_by_date_offset(
+                results, tracks_to_move, date_before)
         return tracks_to_move
     else:
         print("Can't get token for", username)
@@ -228,13 +229,33 @@ def get_all_tracks_by_se_id_offset(start_id_offset, end_id_offset, ids_exception
         print("Can't get token for ", username)
 
 
-setUp()
-# tracks_to_move = get_all_tracks_by_date_offset()
-# print(tracks_to_move)
-# tracks_to_move = get_all_tracks_by_id_offset('4RzpCjByV1NWUGKVQGuej6')
-tracks_to_move = get_all_tracks_by_se_id_offset(
-    '4RzpCjByV1NWUGKVQGuej6', '4LIbjDbLweGCrHVw8QbMSb', [])
-print(tracks_to_move)
-new_playlist_id = create_playlist()
-add_to_playlist(new_playlist_id, tracks_to_move)
-# delete_from_saved(tracks_to_move)
+if __name__ == "__main__":
+    if len(sys.argv) > 2:
+        setUp()
+        mode = sys.argv[1]
+        if mode == 'date':
+            if sys.argv[2]:
+                date_before = sys.argv[2] + 'T00:00:00Z'
+                tracks_to_move = get_all_tracks_by_date_offset(date_before)
+            else:
+                raise ValueError('Error: Missing date')
+        if mode == 'id':
+            if sys.argv[2]:
+                tracks_to_move = get_all_tracks_by_id_offset(sys.argv[2])
+            else:
+                raise ValueError('Missing id')
+        if mode == 'idse':
+            if sys.argv[2]:
+                with open(sys.argv[2], 'r') as ids_file:
+                    ids = [line.rstrip('\n') for line in ids_file]
+                    start_id_offset = ids[0]
+                    end_id_offset = ids[1]
+                    ids_exceptions = ids[2:]
+                tracks_to_move = get_all_tracks_by_se_id_offset(start_id_offset, end_id_offset, ids_exceptions)
+            else:
+                raise ValueError('Missing Filename')
+        new_playlist_id = create_playlist()
+        add_to_playlist(new_playlist_id, tracks_to_move)
+        # delete_from_saved(tracks_to_move)
+    else:
+        raise ValueError('Error Missing arg - mode args')
