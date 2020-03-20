@@ -12,8 +12,16 @@ redirect_uri = ''
 username = ''
 scope = ''
 sp = ''
+id_offset_found = False
+start_id_offset_found = False
+end_id_offset_found = False
 
-date_before = '2019-09-11T00:00:00Z'
+date_before = '2019-09-13T00:00:00Z'
+
+"""
+Initial set up config files
+Initializes Spotify and does authorization
+"""
 
 
 def setUp():
@@ -30,16 +38,20 @@ def setUp():
     global sp
     sp = spotipy.Spotify(auth=token)
 
+# prints out tracks in results
 
-def show_tracks(results, tracks_to_move):
 
+def show_tracks(results):
     for item in results['items']:
         track = item['track']
-    #    print("%32.32s %32.32s %32s %s" % (
-    #        track['artists'][0]['name'], track['name'], item['added_at'], date_before >= item['added_at']))
-        if date_before >= item['added_at']:
-            tracks_to_move.append(track['id'])
-    return tracks_to_move
+        print("%32.32s %32.32s %32s %s" % (
+            track['artists'][0]['name'], track['name'], item['added_at'], date_before >= item['added_at']))
+
+
+"""
+Creates a new playlist
+Names it as "Archive Month-Year"
+"""
 
 
 def create_playlist():
@@ -53,17 +65,9 @@ def create_playlist():
         return None
 
 
-def getSavedSongs():
-    if sp:
-        results = sp.current_user_saved_tracks()
-        tracks_to_move = []
-        tracks_to_move = show_tracks(results, tracks_to_move)
-        while results['next']:
-            results = sp.next(results)
-            tracks_to_move = show_tracks(results, tracks_to_move)
-        return tracks_to_move
-    else:
-        print("Can't get token for", username)
+"""
+Adds all the songs to a playlist
+"""
 
 
 def add_to_playlist(new_playlist_id, tracks_to_move):
@@ -74,6 +78,57 @@ def add_to_playlist(new_playlist_id, tracks_to_move):
     else:
         print('''couldn't do it ''')
 
+
+"""
+Gets the tracks in a "subset" of tracks stored in "results"
+"""
+
+
+def get_tracks_by_date_offset(results, tracks_to_move):
+    for item in results['items']:
+        track = item['track']
+        if date_before >= item['added_at']:
+            tracks_to_move.append(track['id'])
+    return tracks_to_move
+
+
+"""
+Gets all the tracks by calling get_tracks_by_date_offset()
+"""
+
+
+def get_all_tracks_by_date_offset():
+    if sp:
+        results = get_first_saved_songs()
+        # show_tracks(results)
+        tracks_to_move = []
+        tracks_to_move = get_tracks_by_date_offset(results, tracks_to_move)
+        while results['next']:
+            results = sp.next(results)
+            tracks_to_move = get_tracks_by_date_offset(results, tracks_to_move)
+        return tracks_to_move
+    else:
+        print("Can't get token for", username)
+
+
+"""
+Returns the first set of saved songs
+"""
+
+
+def get_first_saved_songs():
+    if sp:
+        results = sp.current_user_saved_tracks()
+        return results
+    else:
+        print("Can't get token for", username)
+
+
+"""
+Deletes songs from Saved List
+"""
+
+
 def delete_from_saved(tracks_to_move):
     if sp:
         sp.trace = False
@@ -82,9 +137,101 @@ def delete_from_saved(tracks_to_move):
     else:
         print('Token error')
 
+
+"""
+Gets tracks starting from id [id:] in subset
+"""
+
+
+def get_tracks_by_id_offset(results, tracks_to_move, id_offset):
+    for item in results['items']:
+        track = item['track']
+        global id_offset_found
+        if not id_offset_found:
+            if id_offset == track['id']:
+                tracks_to_move.append(track['id'])
+                id_offset_found = True
+            else:
+                continue
+        else:
+            tracks_to_move.append(track['id'])
+    return tracks_to_move
+
+
+"""
+Gets tracks starting from id [id:] by get_tracks_by_id_offset
+"""
+
+
+def get_all_tracks_by_id_offset(id_offset):
+    if sp:
+        results = get_first_saved_songs()
+        tracks_to_move = []
+        tracks_to_move = get_tracks_by_id_offset(
+            results, tracks_to_move, id_offset)
+        while results['next']:
+            results = sp.next(results)
+            tracks_to_move = get_tracks_by_id_offset(
+                results, tracks_to_move, id_offset)
+        return tracks_to_move
+    else:
+        print("Can't get token for", username)
+
+
+"""
+Gets tracks starting from id and ending by id in subset
+"""
+
+
+def get_tracks_by_se_id_offset(results, tracks_to_move, start_id_offset, end_id_offset):
+    if start_id_offset == end_id_offset:
+        return tracks_to_move.append(start_id_offset)
+    for item in results['items']:
+        track = item['track']
+        global start_id_offset_found, end_id_offset_found
+        if not start_id_offset_found:
+            if start_id_offset == track['id']:
+                tracks_to_move.append(track['id'])
+                start_id_offset_found = True
+            else:
+                continue
+        elif not end_id_offset_found:
+            if end_id_offset == track['id']:
+                tracks_to_move.append(track['id'])
+                end_id_offset_found = True
+            elif not end_id_offset_found:
+                tracks_to_move.append(track['id'])
+    return tracks_to_move
+
+
+"""
+Gets all tracks starting from id and ending by id
+"""
+
+
+def get_all_tracks_by_se_id_offset(start_id_offset, end_id_offset):
+    if sp:
+        results = get_first_saved_songs()
+        tracks_to_move = []
+        tracks_to_move = get_tracks_by_se_id_offset(
+            results, tracks_to_move, start_id_offset, end_id_offset)
+        while results['next']:
+            if not end_id_offset_found:
+                results = sp.next(results)
+                tracks_to_move = get_tracks_by_se_id_offset(
+                    results, tracks_to_move, start_id_offset, end_id_offset)
+        return tracks_to_move
+    else:
+        print("Can't get token for ", username)
+
+
 setUp()
-tracks_to_move = getSavedSongs()
+# tracks_to_move = get_all_tracks_by_date_offset()
+# print(tracks_to_move)
+# tracks_to_move = get_all_tracks_by_id_offset('4RzpCjByV1NWUGKVQGuej6')
+tracks_to_move = get_all_tracks_by_se_id_offset(
+    '4RzpCjByV1NWUGKVQGuej6', '59PYPDxTbqJpiGfyogPb5h')
 print(tracks_to_move)
 new_playlist_id = create_playlist()
 add_to_playlist(new_playlist_id, tracks_to_move)
-delete_from_saved(tracks_to_move)
+# delete_from_saved(tracks_to_move)
