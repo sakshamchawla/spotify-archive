@@ -1,7 +1,7 @@
 # spotify-archive
 Move your saved songs to playlists
 ## Why
-If you have a long of songs in your "Liked Songs" or Saved Songs, which you don't listen to anymore but don't want to lose them either, you can move them to a playlist.
+If you have a long list of songs in your "Liked Songs" or Saved Songs, which you don't listen to anymore but don't want to lose them either, you can move them to a playlist.
 
 ## Requirements
 Requires [spotipy](https://spotipy.readthedocs.io/en/2.9.0/)
