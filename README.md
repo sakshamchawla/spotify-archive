@@ -6,9 +6,10 @@ If you have a long list of songs in your "Liked Songs" or Saved Songs, which you
 ## Requirements
 Requires [spotipy](https://spotipy.readthedocs.io/en/2.9.0/)
 
+`python3 -m pip install spotipy`
+
 Requires [Spotify Desktop](https://www.spotify.com/us/download) (explained in Notes).
 
-`python3 -m pip install spotipy`
 
 ### Files
 #### config
@@ -21,7 +22,7 @@ user-library-read playlist-modify-public user-library-modify
 [username]
 ```
 Obtain client_id, client_secret from [developer.spotify.com](developer.spotify.com). Set callback_url as http://localhost.
-Do not modify 4th line of config. They are the scopes of authorization that the program Requires. Last line is the username, you can get it from Account Settings in your Spotify account.
+Do not modify 4th line of config. They are the scopes of authorization that the program requires. Last line is the username, you can get it from Account Settings in your Spotify account.
 #### ids
 Required only if you are using ids offset for copying tracks.
 Format:
