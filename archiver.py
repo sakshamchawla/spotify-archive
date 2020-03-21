@@ -72,13 +72,42 @@ Adds all the songs to a playlist
 
 
 def add_to_playlist(new_playlist_id, tracks_to_move):
-    print('Adding songs to playlist')
+    print('Adding ' + str(len(tracks_to_move)) + ' songs to playlist')
     if sp:
-        results = sp.user_playlist_add_tracks(
-            username, new_playlist_id, tracks_to_move)
+        if len(tracks_to_move) > 100:
+            for i in range(0, len(tracks_to_move), 100):
+                results = sp.user_playlist_add_tracks(
+                    username, new_playlist_id, tracks_to_move[i:i + 100])
+        else:
+            results = sp.user_playlist_add_tracks(
+                username, new_playlist_id, tracks_to_move)
         # print(results)
     else:
         print('''couldn't do it ''')
+
+
+"""
+Deletes songs from Saved List
+"""
+
+
+def delete_from_saved(tracks_to_move, new_playlist_id):
+    if sp:
+        text = input(
+            'Playlist has been created.\nAre you sure you to delete from Saved Songs? (Yes or No) ')
+        if text.lower() == 'yes':
+            sp.trace = False
+            if len(tracks_to_move) > 50:
+                for i in range(0, len(tracks_to_move), 50):
+                    results = sp.current_user_saved_tracks_delete(
+                        tracks=tracks_to_move[i:i+50])
+            else:
+                results = sp.current_user_saved_tracks_delete(
+                    tracks=tracks_to_move)
+        else:
+            print('Aborted. Delete Playlist manually')
+    else:
+        print('Token error')
 
 
 """
@@ -127,23 +156,6 @@ def get_first_saved_songs():
         return results
     else:
         print("Can't get token for", username)
-
-
-"""
-Deletes songs from Saved List
-"""
-
-
-def delete_from_saved(tracks_to_move, new_playlist_id):
-    if sp:
-        text = input('Playlist has been created.\nAre you sure you to delete from Saved Songs? (Yes or No) ')
-        if text.lower() == 'yes':
-            sp.trace = False
-            results = sp.current_user_saved_tracks_delete(tracks=tracks_to_move)
-        else:
-            print('Aborted. Delete Playlist manually')
-    else:
-        print('Token error')
 
 
 """
@@ -260,7 +272,8 @@ if __name__ == "__main__":
                     start_id_offset = ids[0]
                     end_id_offset = ids[1]
                     ids_exceptions = ids[2:]
-                tracks_to_move = get_all_tracks_by_se_id_offset(start_id_offset, end_id_offset, ids_exceptions)
+                tracks_to_move = get_all_tracks_by_se_id_offset(
+                    start_id_offset, end_id_offset, ids_exceptions)
             else:
                 raise ValueError('Missing Filename')
         new_playlist_id = create_playlist()
